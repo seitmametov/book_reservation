@@ -1,0 +1,17 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/book
+    username: postgres
+    password: root
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update   # ⬅️ ВАЖНО: создаёт / обновляет таблицы
+    show-sql: true
+    properties:
+      hibernate:
+        format_s_
