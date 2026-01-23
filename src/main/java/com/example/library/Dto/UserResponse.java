@@ -1,6 +1,6 @@
 package com.example.library.Dto;
 
-public record MeResponse(
+public record UserResponse(
         Long id,
         String email,
         String role
