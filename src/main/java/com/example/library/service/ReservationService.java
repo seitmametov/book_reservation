@@ -63,6 +63,11 @@ public class ReservationService {
         return toResponse(reservation);
     }
 
+    /**
+     * Вернуть книгу
+     * @param reservationId
+     * @param user
+     */
 
     public void returnBook(Long reservationId, User user) {
 
@@ -87,7 +92,9 @@ public class ReservationService {
     }
 
 
-    //Проверка естьли у пользователя активные брони
+    /**
+     *     Проверка естьли у пользователя активные брони
+     */
     public List<ReservationResponse> myActiveReservations(User user) {
         return reservationRepository.findByUserAndStatusIn(
                         user,
