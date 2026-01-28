@@ -3,6 +3,8 @@ package com.example.library.controller;
 import com.example.library.Dto.BookCreateRequest;
 import com.example.library.Dto.BookResponse;
 import com.example.library.service.BookService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/books")
 @RequiredArgsConstructor
+@Tag(name = "Кантроллер Book связан со всеми махинациями которые мы можем тварить с книгами, такие как выдача созлание и тд")
 public class BookController {
 
     private final BookService bookService;
@@ -42,6 +45,7 @@ public class BookController {
         bookService.delete(id);
     }
 
+    @Operation(summary = "Прикрепление обложки для книги, в поле 'id' водим id книги и к нему прикрепиться облодка которая вы вставили")
     @PostMapping("/{id}/cover")
     public BookResponse uploadCover(
             @PathVariable Long id,
