@@ -49,11 +49,10 @@ public class ReservationController {
 
 
     @DeleteMapping("/{id}")
-    public void cancel(
+        public void cancel(
             @PathVariable Long id,
             @AuthenticationPrincipal User user
     )
-
 
     {
         reservationService.cancel(id, user);

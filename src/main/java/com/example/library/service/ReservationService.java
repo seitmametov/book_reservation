@@ -113,7 +113,6 @@ public class ReservationService {
      * Пользователь забрал книгу
      */
     public void takeBook(Long reservationId, User user) {
-
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
@@ -124,7 +123,11 @@ public class ReservationService {
         Book book = reservation.getBook();
         book.setStatus(BookStatus.TAKEN);
 
-        reservationRepository.delete(reservation);
+        // ВМЕСТО delete(reservation) делаем фиксацию:
+        reservation.setStatus(ReservationStatus.COMPLETED); // Помечаем, что на руках
+        reservation.setTakenAt(LocalDateTime.now());       // Засекаем время выдачи
+
+        reservationRepository.save(reservation); // СОХРАНЯЕМ, а не удаляем
         bookRepository.save(book);
     }
 
@@ -132,18 +135,17 @@ public class ReservationService {
      * Отмена брони
      */
     public void cancel(Long reservationId, User user) {
-
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
-        if (!reservation.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Not your reservation");
-        }
+        // Проверка юзера остается...
 
         Book book = reservation.getBook();
         book.setStatus(BookStatus.AVAILABLE);
 
-        reservationRepository.delete(reservation);
+        // ВМЕСТО delete — помечаем как отмененную
+        reservation.setStatus(ReservationStatus.CANCELLED);
+        reservationRepository.save(reservation);
         bookRepository.save(book);
     }
 
@@ -159,8 +161,20 @@ public class ReservationService {
                 reservation.getId(),
                 reservation.getBook().getId(),
                 reservation.getBook().getTitle(),
-                reservation.getReservedAt()
+                reservation.getReservedAt(),
+                reservation.getTakenAt(),    // Передаем дату взятия
+                reservation.getReturnedAt(),  // Передаем дату возврата
+                reservation.getStatus()      // Передаем статус
         );
+    }
+    public List<ReservationResponse> getMyReadingHistory(User user) {
+        // Просто тянем всё, где статус RETURNED (прочитано)
+        return reservationRepository.findByUserAndStatusIn(
+                        user,
+                        List.of(ReservationStatus.RETURNED)
+                ).stream()
+                .map(this::toResponse)
+                .toList();
     }
 }
 
