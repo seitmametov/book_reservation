@@ -20,7 +20,7 @@ public class BookController {
 
     private final BookService bookService;
 
-    // USER + ADMIN
+    // user + admin
     @GetMapping
     public List<BookResponse> getAll() {
         return bookService.getAllBooks();
@@ -31,7 +31,7 @@ public class BookController {
         return bookService.getBookById(id);
     }
 
-    // ADMIN
+    // admin
     @PostMapping("/admin")
     @PreAuthorize("hasRole('ADMIN')")
     public BookResponse create(@RequestBody BookCreateRequest request) {

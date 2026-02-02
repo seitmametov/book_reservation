@@ -64,6 +64,7 @@ public class Book {
     private Category category;
 
     // где лежит книга (полка, шкаф и тд)
+    @Column(nullable = false)
     private String location;
 
     // ссылка на обложку (пока String, потом MinIO)
