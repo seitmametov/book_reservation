@@ -83,6 +83,7 @@ public class ReservationService {
         }
 
         reservation.setStatus(ReservationStatus.RETURNED);
+        reservation.setReturnedAt(LocalDateTime.now());
 
         Book book = reservation.getBook();
         book.setStatus(BookStatus.AVAILABLE);
@@ -119,6 +120,10 @@ public class ReservationService {
         if (!reservation.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("Not your reservation");
         }
+        if (reservation.getStatus() != ReservationStatus.ACTIVE) {
+            throw new RuntimeException("Book cannot be taken");
+        }
+
 
         Book book = reservation.getBook();
         book.setStatus(BookStatus.TAKEN);
