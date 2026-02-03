@@ -2,6 +2,7 @@ package com.example.library.service;
 
 import com.example.library.Dto.ReservationResponse;
 import com.example.library.config.ReservationProperties;
+import com.example.library.enam.BookEventType;
 import com.example.library.enam.BookStatus;
 import com.example.library.enam.ReservationStatus;
 import com.example.library.entity.Book;
@@ -22,6 +23,7 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final BookRepository bookRepository;
     private final ReservationProperties reservationProperties;
+    private final BookHistoryService bookHistoryService;
 
     /**
      * Забронировать книгу
@@ -60,6 +62,9 @@ public class ReservationService {
         reservationRepository.save(reservation);
         bookRepository.save(book);
 
+        bookHistoryService.log(book, user, BookEventType.RESERVED);
+
+
         return toResponse(reservation);
     }
 
@@ -90,6 +95,9 @@ public class ReservationService {
 
         reservationRepository.save(reservation);
         bookRepository.save(book);
+
+        bookHistoryService.log(book, user, BookEventType.RETURNED);
+
     }
 
 
@@ -134,6 +142,9 @@ public class ReservationService {
 
         reservationRepository.save(reservation); // СОХРАНЯЕМ, а не удаляем
         bookRepository.save(book);
+
+        bookHistoryService.log(book, user, BookEventType.TAKEN);
+
     }
 
     /**
@@ -152,6 +163,11 @@ public class ReservationService {
         reservation.setStatus(ReservationStatus.CANCELLED);
         reservationRepository.save(reservation);
         bookRepository.save(book);
+
+        bookHistoryService.log(book, user, BookEventType.CANCELLED);
+
+
+
     }
 
     public List<ReservationResponse> myReservations(User user) {

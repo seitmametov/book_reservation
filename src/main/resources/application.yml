@@ -3,15 +3,14 @@ server:
 
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: root
     driver-class-name: org.postgresql.Driver
-
 
   jpa:
     hibernate:
-      ddl-auto: update   # ⬅️ ВАЖНО: создаёт / обновляет таблицы
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
@@ -25,5 +24,3 @@ minio:
   access-key: minio
   secret-key: minio123
   bucket: book-covers
-
-
