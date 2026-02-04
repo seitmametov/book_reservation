@@ -48,4 +48,13 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @Column(nullable = false)
+    private boolean emailVerified = false;
+
+    @Column(nullable = false)
+    private boolean enabled = false; // админский допуск
+
+    private String firstName;
+    private String lastName;
 }
