@@ -24,3 +24,6 @@ minio:
   access-key: minio
   secret-key: minio123
   bucket: book-covers
+
+  mustache:
+    expose-request-attributes: true
