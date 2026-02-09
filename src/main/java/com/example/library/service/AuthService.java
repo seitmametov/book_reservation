@@ -31,6 +31,8 @@ public class AuthService {
         }
 
         User user = User.builder()
+                .firstName(request.firstName()) // Добавили
+                .lastName(request.lastName())
                 .email(request.email())
                 .password(encoder.encode(request.password()))
                 .role(Role.USER)
@@ -75,6 +77,8 @@ public class AuthService {
         }
 
         User admin = User.builder()
+                .firstName(request.firstName()) // Добавили
+                .lastName(request.lastName())
                 .email(request.email())
                 .password(encoder.encode(request.password()))
                 .role(Role.ADMIN)

@@ -7,8 +7,7 @@ import lombok.*;
 
 @Entity
 @Table(name = "users")
-@Getter
-@Setter
+@Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -29,5 +28,11 @@ public class User {
 
     @Column(nullable = false)
     private boolean enabled = false;
+
+    @Column(nullable = false) // Новое поле
+    private String firstName;
+
+    @Column(nullable = false) // Новое поле
+    private String lastName;
 
 }
