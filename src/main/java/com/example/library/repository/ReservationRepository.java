@@ -5,6 +5,8 @@ import com.example.library.entity.Book;
 import com.example.library.entity.Reservation;
 import com.example.library.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -31,6 +33,13 @@ public interface ReservationRepository
             User user,
             List<ReservationStatus> statuses
     );
+    @Query("""
+        select r from Reservation r
+        where r.status = 'TAKEN'
+        and r.takenAt < :overdueDate
+    """)
+    List<Reservation> findOverdue(@Param("overdueDate") LocalDateTime overdueDate);
 }
+
 
 

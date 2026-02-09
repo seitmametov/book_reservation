@@ -192,5 +192,23 @@ public class ReservationService {
                 .map(this::toResponse)
                 .toList();
     }
+    public List<ReservationResponse> getOverdueReservations() {
+
+        LocalDateTime overdueDate = LocalDateTime.now().minusDays(14);
+
+        return reservationRepository.findOverdue(overdueDate)
+                .stream()
+                .map(r -> new ReservationResponse(
+                        r.getId(),
+                        r.getBook().getId(),
+                        r.getBook().getTitle(),
+                        r.getReservedAt(),
+                        r.getTakenAt(),
+                        r.getReturnedAt(),
+                        r.getStatus()
+                ))
+                .toList();
+    }
+
 }
 

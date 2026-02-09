@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -268,4 +269,15 @@ public class ReservationController {
     ) {
         reservationService.cancel(id, user);
     }
+    @Operation(
+            summary = "Получить список просроченных книг",
+            description = "Доступно только администратору"
+    )
+    @GetMapping("/overdue")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<ReservationResponse> overdue() {
+        return reservationService.getOverdueReservations();
+    }
+
+
 }
