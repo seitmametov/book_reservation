@@ -1,7 +1,9 @@
 package com.example.library.controller;
 
 import com.example.library.Dto.BookCreateRequest;
+import com.example.library.Dto.BookHistoryResponse;
 import com.example.library.Dto.BookResponse;
+import com.example.library.service.BookHistoryService;
 import com.example.library.service.BookService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,6 +29,8 @@ import java.util.List;
 public class BookController {
 
     private final BookService bookService;
+    private final BookHistoryService bookHistoryService;
+
 
     @Operation(
             summary = "Получить все книги",
@@ -218,4 +222,20 @@ public class BookController {
     public void softDelete(@PathVariable Long id) {
         bookService.softDelete(id);
     }
+
+    @Operation(
+            summary = "Получить историю книги",
+            description = "Возвращает историю действий с книгой. Доступно только для ADMIN"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "История получена"),
+            @ApiResponse(responseCode = "401", description = "Пользователь не авторизован"),
+            @ApiResponse(responseCode = "403", description = "Недостаточно прав (требуется роль ADMIN)")
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/{id}/history")
+    public List<BookHistoryResponse> getBookHistory(@PathVariable Long id) {
+        return bookHistoryService.getHistoryByBookId(id);
+    }
+
 }
