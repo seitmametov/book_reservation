@@ -87,7 +87,8 @@ public class BookSpecification {
             if (rating == null) {
                 return cb.conjunction();
             }
-            return cb.greaterThanOrEqualTo(root.get("rating"), rating);
+            // Убедись, что имя поля совпадает с полем в Entity Book!
+            return cb.greaterThanOrEqualTo(root.get("averageRating"), rating);
         };
     }
     // по дате добавления

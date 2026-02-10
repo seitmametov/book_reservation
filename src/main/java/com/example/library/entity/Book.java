@@ -56,4 +56,10 @@ public class Book {
     public void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
+
+    @Column(nullable = false)
+    private Double averageRating = 0.0;
+
+    @Column(nullable = false)
+    private Integer reviewCount = 0;
 }

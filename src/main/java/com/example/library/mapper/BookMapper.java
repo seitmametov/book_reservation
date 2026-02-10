@@ -40,7 +40,9 @@ public class BookMapper {
                 book.getCategory().getName(),
                 book.getLocation(),
                 book.getCoverUrl(),
-                book.getStatus()
+                book.getStatus(),
+                book.getAverageRating(),
+                book.getReviewCount()
         );
     }
 }

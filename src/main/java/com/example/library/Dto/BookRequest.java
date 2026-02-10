@@ -6,5 +6,6 @@ public record BookRequest(
         String description,
         Long categoryId,
         String location
+
 ) {}
 

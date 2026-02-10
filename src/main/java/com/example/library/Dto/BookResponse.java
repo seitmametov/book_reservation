@@ -10,5 +10,7 @@ public record BookResponse(
         String category,
         String location,
         String coverUrl,
-        BookStatus status
+        BookStatus status,
+        Double averageRating, // Добавлено
+        Integer reviewCount   // Добавлено
 ) {}
