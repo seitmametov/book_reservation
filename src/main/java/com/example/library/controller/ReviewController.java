@@ -1,7 +1,7 @@
 package com.example.library.controller;
 
-import com.example.library.Dto.ReviewRequest;
-import com.example.library.Dto.ReviewResponse;
+import com.example.library.Dto.request.ReviewRequest;
+import com.example.library.Dto.response.ReviewResponse;
 import com.example.library.service.ReviewService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

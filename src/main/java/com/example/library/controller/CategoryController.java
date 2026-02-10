@@ -1,12 +1,11 @@
 package com.example.library.controller;
 
-import com.example.library.Dto.BookFilterRequest;
-import com.example.library.Dto.BookResponse;
-import com.example.library.Dto.CategoryRequest;
+import com.example.library.Dto.request.BookFilterRequest;
+import com.example.library.Dto.response.BookResponse;
+import com.example.library.Dto.request.CategoryRequest;
 import com.example.library.entity.Category;
 import com.example.library.service.BookService;
 import com.example.library.service.CategoryService;
-import jakarta.validation.Valid;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;

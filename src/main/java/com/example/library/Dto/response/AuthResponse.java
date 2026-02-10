@@ -1,4 +1,4 @@
-package com.example.library.Dto;
+package com.example.library.Dto.response;
 
 public record AuthResponse(
         String token

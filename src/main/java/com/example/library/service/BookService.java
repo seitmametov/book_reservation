@@ -1,10 +1,9 @@
 package com.example.library.service;
 
-import com.example.library.Dto.BookCreateRequest;
-import com.example.library.Dto.BookFilterRequest;
-import com.example.library.Dto.BookResponse;
+import com.example.library.Dto.request.BookCreateRequest;
+import com.example.library.Dto.request.BookFilterRequest;
+import com.example.library.Dto.response.BookResponse;
 import com.example.library.Specification.BookSpecification;
-import com.example.library.enam.BookStatus;
 import com.example.library.enam.SortDirection;
 import com.example.library.entity.Book;
 import com.example.library.mapper.BookMapper;

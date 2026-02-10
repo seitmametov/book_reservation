@@ -1,6 +1,6 @@
 package com.example.library.service;
 
-import com.example.library.Dto.BookHistoryResponse;
+import com.example.library.Dto.response.BookHistoryResponse;
 import com.example.library.enam.BookEventType;
 import com.example.library.entity.Book;
 import com.example.library.entity.BookHistory;

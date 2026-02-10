@@ -1,6 +1,6 @@
 package com.example.library.controller;
 
-import com.example.library.Dto.UserResponse;
+import com.example.library.Dto.response.UserResponse;
 import com.example.library.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;

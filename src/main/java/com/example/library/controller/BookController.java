@@ -1,8 +1,8 @@
 package com.example.library.controller;
 
-import com.example.library.Dto.BookCreateRequest;
-import com.example.library.Dto.BookHistoryResponse;
-import com.example.library.Dto.BookResponse;
+import com.example.library.Dto.request.BookCreateRequest;
+import com.example.library.Dto.response.BookHistoryResponse;
+import com.example.library.Dto.response.BookResponse;
 import com.example.library.service.BookHistoryService;
 import com.example.library.service.BookService;
 import io.swagger.v3.oas.annotations.Operation;

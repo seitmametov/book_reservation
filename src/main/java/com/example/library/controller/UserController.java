@@ -1,6 +1,6 @@
 package com.example.library.controller;
 
-import com.example.library.Dto.UserResponse;
+import com.example.library.Dto.response.UserResponse;
 import com.example.library.entity.User;
 import com.example.library.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

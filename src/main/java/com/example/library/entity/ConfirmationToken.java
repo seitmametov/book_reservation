@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Setter
@@ -21,8 +23,16 @@ public class ConfirmationToken {
     @JoinColumn(nullable = false, name = "user_id")
     private User user;
 
-    public ConfirmationToken(User user) {
+    @Column(nullable = false)
+    private LocalDateTime expiresAt;
+
+    public ConfirmationToken(User user, int minutes) {
         this.user = user;
         this.token = java.util.UUID.randomUUID().toString();
+        this.expiresAt = LocalDateTime.now().plusMinutes(minutes); // Устанавливаем срок
+    }
+
+    public boolean isExpired() {
+        return LocalDateTime.now().isAfter(this.expiresAt); // Если СЕЙЧАС больше, чем ВРЕМЯ ИСТЕЧЕНИЯ
     }
 }

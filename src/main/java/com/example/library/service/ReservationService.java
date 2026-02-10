@@ -1,6 +1,6 @@
 package com.example.library.service;
 
-import com.example.library.Dto.ReservationResponse;
+import com.example.library.Dto.response.ReservationResponse;
 import com.example.library.config.ReservationProperties;
 import com.example.library.enam.BookEventType;
 import com.example.library.enam.BookStatus;

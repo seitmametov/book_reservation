@@ -1,4 +1,4 @@
-package com.example.library.Dto;
+package com.example.library.Dto.response;
 
 public record UserResponse(
         Long id,

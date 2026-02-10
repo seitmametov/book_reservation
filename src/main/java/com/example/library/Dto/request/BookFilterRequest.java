@@ -1,4 +1,4 @@
-package com.example.library.Dto;
+package com.example.library.Dto.request;
 
 import com.example.library.enam.BookStatus;
 import com.example.library.enam.SortDirection;

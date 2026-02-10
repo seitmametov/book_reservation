@@ -1,7 +1,7 @@
 package com.example.library.service;
 
-import com.example.library.Dto.ReviewRequest;
-import com.example.library.Dto.ReviewResponse;
+import com.example.library.Dto.request.ReviewRequest;
+import com.example.library.Dto.response.ReviewResponse;
 import com.example.library.entity.Book;
 import com.example.library.entity.Review;
 import com.example.library.entity.User;

@@ -1,6 +1,6 @@
 package com.example.library.mapper;
 
-import com.example.library.Dto.BookHistoryResponse;
+import com.example.library.Dto.response.BookHistoryResponse;
 import com.example.library.entity.BookHistory;
 import org.springframework.stereotype.Component;
 

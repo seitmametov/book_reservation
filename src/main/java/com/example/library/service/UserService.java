@@ -1,6 +1,6 @@
 package com.example.library.service;
 
-import com.example.library.Dto.UserResponse;
+import com.example.library.Dto.response.UserResponse;
 import com.example.library.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

@@ -1,4 +1,4 @@
-package com.example.library.Dto;
+package com.example.library.Dto.request;
 
 public record LoginRequest(
         String email,

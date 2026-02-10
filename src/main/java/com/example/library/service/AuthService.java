@@ -1,12 +1,12 @@
 package com.example.library.service;
 
-import com.example.library.Dto.AuthResponse;
-import com.example.library.Dto.LoginRequest;
-import com.example.library.Dto.RegisterRequest;
+import com.example.library.Dto.request.ResetPasswordRequest;
+import com.example.library.Dto.response.AuthResponse;
+import com.example.library.Dto.request.LoginRequest;
+import com.example.library.Dto.request.RegisterRequest;
 import com.example.library.enam.Role;
 import com.example.library.entity.ConfirmationToken;
 import com.example.library.entity.User;
-import com.example.library.exceptions.EmailAlreadyExistsException;
 import com.example.library.repository.ConfirmationTokenRepository;
 import com.example.library.repository.UserRepository;
 import com.example.library.service.impl.UserDetailsImpl;
@@ -32,7 +32,7 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new RuntimeException("Email already exists");
+            throw new RuntimeException("Электронная почта уже существует    ");
         }
 
         User user = User.builder()
@@ -46,13 +46,12 @@ public class AuthService {
 
         userRepository.save(user);
 
-        ConfirmationToken token = new ConfirmationToken(user);
-        tokenRepository.save(token); // Создай ConfirmationTokenRepository
-
+        ConfirmationToken token = new ConfirmationToken(user, 15);
+        tokenRepository.save(token);
         String link = "http://localhost:8080/auth/confirm?token=" + token.getToken();
         emailService.send(user.getEmail(), "Click here to confirm: " + link);
 
-        return new AuthResponse("Please confirm your email. Check your inbox.");
+        return new AuthResponse("Пожалуйста, подтвердите свой адрес электронной почты. Проверьте свою почту..");
     }
 
 
@@ -71,10 +70,10 @@ public class AuthService {
         User user = userDetails.getUser(); // ✅ ВОТ ТАК
 
         if (!user.isEmailVerified()) {
-            throw new RuntimeException("Please verify your email first");
+            throw new RuntimeException("Пожалуйста, сначала подтвердите свой адрес электронной почты.");
         }
         if (!user.isEnabled()) {
-            throw new RuntimeException("Account waiting for admin approval");
+            throw new RuntimeException("Учетная запись ожидает подтверждения администратора.");
         }
 
         String token = jwtService.generateToken(user);
@@ -85,7 +84,7 @@ public class AuthService {
     public String registerAdmin(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.email())) {
-            throw new RuntimeException("Admin already exists");
+            throw new RuntimeException("Админ уже существует");
         }
 
         User admin = User.builder()
@@ -99,13 +98,18 @@ public class AuthService {
 
         userRepository.save(admin);
 
-        return "Admin registered successfully";
+        return "Админ успешно зарегистрировался";
     }
     @Transactional
     public String confirmToken(String token) {
+        // В методах подтверждения добавь проверку:
         ConfirmationToken confirmationToken = tokenRepository.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Token not found"));
+                .orElseThrow(() -> new RuntimeException("Токен не найден"));
 
+        if (confirmationToken.isExpired()) {
+            tokenRepository.delete(confirmationToken); // Удаляем мусор
+            throw new RuntimeException("Срок действия токена истек! Пожалуйста, запросите новый токен");
+        }
         User user = confirmationToken.getUser();
         user.setEmailVerified(true);
         userRepository.save(user);
@@ -113,7 +117,39 @@ public class AuthService {
         // Теперь токен можно удалить
         tokenRepository.delete(confirmationToken);
 
-        return "Email verified! Now wait for admin approval.";
+        return "Адрес электронной почты подтвержден! Теперь дождитесь подтверждения администратора! ";
+    }
+    @Transactional
+    public String forgotPassword(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+        // Генерим токен (используем наш старый добрый ConfirmationToken)
+        ConfirmationToken token = new ConfirmationToken(user, 15);
+        tokenRepository.save(token);
+
+        // Ссылка будет вести на фронтенд или на наш эндпоинт
+        String link = "http://localhost:8080/auth/reset-password?token=" + token.getToken();
+        emailService.send(user.getEmail(), "To reset your password, click: " + link);
+
+        return "Ссылка для сброса пароля будет отправлена на вашу электронную почту.";
+    }
+
+    @Transactional
+    public String resetPassword(ResetPasswordRequest request) {
+        ConfirmationToken confirmationToken = tokenRepository.findByToken(request.token())
+                .orElseThrow(() -> new RuntimeException("Недействительный или просроченный токен"));
+
+        User user = confirmationToken.getUser();
+
+        // Хэшируем новый пароль
+        user.setPassword(encoder.encode(request.newPassword()));
+        userRepository.save(user);
+
+        // Удаляем токен, чтобы его нельзя было юзать второй раз
+        tokenRepository.delete(confirmationToken);
+
+        return "Пароль успешно обновлен!";
     }
 
 }

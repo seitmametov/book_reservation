@@ -1,9 +1,11 @@
 package com.example.library.controller;
 
 
-import com.example.library.Dto.AuthResponse;
-import com.example.library.Dto.LoginRequest;
-import com.example.library.Dto.RegisterRequest;
+import com.example.library.Dto.request.ForgotPasswordRequest;
+import com.example.library.Dto.request.ResetPasswordRequest;
+import com.example.library.Dto.response.AuthResponse;
+import com.example.library.Dto.request.LoginRequest;
+import com.example.library.Dto.request.RegisterRequest;
 import com.example.library.entity.User;
 import com.example.library.repository.UserRepository;
 import com.example.library.service.AuthService;
@@ -11,7 +13,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -45,7 +46,7 @@ public class AuthController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (!user.isEmailVerified()) {
-            throw new RuntimeException("Cannot approve user: Email not verified yet!");
+            throw new RuntimeException("Невозможно одобрить пользователя: адрес электронной почты еще не подтвержден!");
         }
 
         user.setEnabled(true);
@@ -60,6 +61,17 @@ public class AuthController {
     @GetMapping("/confirm")
     public ResponseEntity<String> confirm(@RequestParam("token") String token) {
         return ResponseEntity.ok(authService.confirmToken(token));
+    }
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        return ResponseEntity.ok(authService.forgotPassword(request.email()));
+    }
+
+    // В реальности этот метод должен открывать страницу,
+// но для теста в Swagger сделаем POST, принимающий токен и пароль
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
+        return ResponseEntity.ok(authService.resetPassword(request));
     }
 
 
