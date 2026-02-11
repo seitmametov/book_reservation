@@ -6,5 +6,6 @@ public record UserResponse(
         String firstName,
         String lastName,
         String role,
-        boolean enabled // Чтобы в общем списке было видно статус
+        boolean enabled,
+        String avatarUrl// Чтобы в общем списке было видно статус
 ) {}

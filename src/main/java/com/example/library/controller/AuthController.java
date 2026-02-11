@@ -81,4 +81,11 @@ public class AuthController {
     public String test() {
         return "test";
     }
+    @Operation(summary = "Подтверждение смены Email", description = "Эндпоинт, по которому кликает юзер в письме")
+    @GetMapping("/confirm-email-change")
+    public ResponseEntity<String> confirmEmailChange(
+            @RequestParam("token") String token,
+            @RequestParam("newEmail") String newEmail) {
+        return ResponseEntity.ok(authService.confirmEmailChange(token, newEmail));
+    }
 }

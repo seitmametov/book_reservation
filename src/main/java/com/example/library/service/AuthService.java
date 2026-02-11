@@ -151,7 +151,51 @@ public class AuthService {
 
         return "Пароль успешно обновлен!";
     }
+    // Добавь это в AuthService.java
 
+    @Transactional
+    public String initiateEmailChange(User user, String newEmail) {
+        if (userRepository.existsByEmail(newEmail)) {
+            throw new RuntimeException("Этот email уже занят другим пользователем");
+        }
+
+        // Генерируем токен.
+        // Чтобы знать, какой email подтверждаем, можно временно сохранить его где-то,
+        // но проще всего передать его в саму ссылку (параметром)
+        ConfirmationToken token = new ConfirmationToken(user, 30); // Даем 30 минут
+        tokenRepository.save(token);
+
+        String link = "http://localhost:8080/auth/confirm-email-change?token=" + token.getToken() + "&newEmail=" + newEmail;
+
+        emailService.send(newEmail, "Подтвердите смену email. Кликните по ссылке: " + link);
+
+        return "Ссылка для подтверждения отправлена на вашу новую почту.";
+    }
+
+    @Transactional
+    public String confirmEmailChange(String token, String newEmail) {
+        ConfirmationToken confirmationToken = tokenRepository.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Недействительный токен"));
+
+        if (confirmationToken.isExpired()) {
+            tokenRepository.delete(confirmationToken);
+            throw new RuntimeException("Срок действия токена истек");
+        }
+
+        User user = confirmationToken.getUser();
+
+        // Проверяем еще раз на уникальность перед финальным сохранением
+        if (userRepository.existsByEmail(newEmail)) {
+            throw new RuntimeException("Этот email уже успели занять!");
+        }
+
+        user.setEmail(newEmail);
+        userRepository.save(user);
+
+        tokenRepository.delete(confirmationToken);
+
+        return "Email успешно обновлен на " + newEmail;
+    }
 }
 
 

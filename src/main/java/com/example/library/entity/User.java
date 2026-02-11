@@ -47,4 +47,8 @@ public class User {
     @Column(name = "is_deleted")
     private boolean deleted = false;
 
+    // В класс User.java добавь:
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
 }

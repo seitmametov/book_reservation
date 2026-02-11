@@ -30,7 +30,8 @@ public class UserController {
                 user.getFirstName(),
                 user.getLastName(),
                 user.getRole().name(),
-                user.isEnabled()
+                user.isEnabled(),
+                user.getAvatarUrl()
         );
     }
 }
