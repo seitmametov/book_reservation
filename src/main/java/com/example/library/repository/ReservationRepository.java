@@ -44,6 +44,12 @@ public interface ReservationRepository
     List<Reservation> findAllByStatusAndReservedAtBefore(ReservationStatus status, LocalDateTime dateTime);
     List<Reservation> findAllByStatusAndTakenAtBetween(ReservationStatus status, LocalDateTime start, LocalDateTime end);
     List<Reservation> findAllByStatusAndTakenAtBefore(ReservationStatus status, LocalDateTime dateTime);
+
+    List<Reservation> findByStatus(ReservationStatus status);
+
+    @Query("SELECT r FROM Reservation r WHERE r.book = :book AND r.status IN ('ACTIVE', 'COMPLETED')")
+    Optional<Reservation> findActiveByBook(@Param("book") Book book);
+
 }
 
 

@@ -4,10 +4,16 @@ import com.example.library.Dto.request.BookCreateRequest;
 import com.example.library.Dto.request.BookFilterRequest;
 import com.example.library.Dto.response.BookResponse;
 import com.example.library.Specification.BookSpecification;
+import com.example.library.enam.BookStatus;
 import com.example.library.enam.SortDirection;
 import com.example.library.entity.Book;
+import com.example.library.entity.Reservation;
+import com.example.library.entity.User;
 import com.example.library.mapper.BookMapper;
 import com.example.library.repository.BookRepository;
+import com.example.library.repository.ReservationRepository;
+import com.example.library.security.SecurityUtils;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -15,7 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-
+import java.util.Optional; // ДОЛЖНО БЫТЬ ТОЛЬКО ЭТО
 @Service
 @RequiredArgsConstructor
 public class BookService {
@@ -23,13 +29,42 @@ public class BookService {
     private final BookRepository bookRepository;
     private final BookMapper bookMapper;
     private final FileStorageService fileStorageService;
+    private final ReservationRepository reservationRepository; // ДОБАВЛЕНО
 
 
 
     public List<BookResponse> getAllBooks() {
-        return bookRepository.findAll()
-                .stream()
-                .map(bookMapper::toResponse)
+        User currentUser = SecurityUtils.getCurrentUser();
+
+        return bookRepository.findAll().stream()
+                .map(book -> {
+                    BookResponse response = bookMapper.toResponse(book);
+
+                    // Если юзер не залогинен, просто отдаем как есть
+                    if (currentUser == null) return response;
+
+                    if (book.getStatus() == BookStatus.RESERVED || book.getStatus() == BookStatus.TAKEN) {
+                        // findActiveByBook должен возвращать java.util.Optional
+                        Optional<Reservation> activeRes = reservationRepository.findActiveByBook(book);
+
+                        if (activeRes.isPresent() && activeRes.get().getUser().getId().equals(currentUser.getId())) {
+                            // Создаем новый Record с измененным статусом
+                            return new BookResponse(
+                                    response.id(),
+                                    response.title(),
+                                    response.author(),
+                                    response.description(),
+                                    response.category(), // В твоем Record это String
+                                    response.location(),
+                                    response.coverUrl(),
+                                    BookStatus.IN_YOUR_HANDS, // Твоя магия
+                                    response.averageRating(),
+                                    response.reviewCount()
+                            );
+                        }
+                    }
+                    return response;
+                })
                 .toList();
     }
 

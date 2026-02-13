@@ -257,6 +257,22 @@ public class ReservationService {
                 ))
                 .toList();
     }
+    /**
+     * Получить все бронирования для админ-панели
+     */
+    public List<ReservationResponse> getAllReservationsForAdmin(ReservationStatus status) {
+        List<Reservation> reservations;
+
+        if (status != null) {
+            reservations = reservationRepository.findByStatus(status);
+        } else {
+            reservations = reservationRepository.findAll();
+        }
+
+        return reservations.stream()
+                .map(this::toResponse)
+                .toList();
+    }
 
 
 }

@@ -4,6 +4,7 @@ public enum BookStatus {
     AVAILABLE,   // на полке
     RESERVED,    // забронирована
     TAKEN,       // на руках
-    RETURNED     //вернуть
+    RETURNED,    //вернуть
+    IN_YOUR_HANDS //У вас
 
 }

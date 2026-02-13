@@ -3,8 +3,11 @@ package com.example.library.controller;
 import com.example.library.Dto.request.BookCreateRequest;
 import com.example.library.Dto.response.BookHistoryResponse;
 import com.example.library.Dto.response.BookResponse;
+import com.example.library.Dto.response.ReservationResponse;
+import com.example.library.enam.ReservationStatus;
 import com.example.library.service.BookHistoryService;
 import com.example.library.service.BookService;
+import com.example.library.service.ReservationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -30,6 +33,7 @@ public class BookController {
 
     private final BookService bookService;
     private final BookHistoryService bookHistoryService;
+    private final ReservationService reservationService;
 
 
     @Operation(
@@ -236,6 +240,19 @@ public class BookController {
     @GetMapping("/{id}/history")
     public List<BookHistoryResponse> getBookHistory(@PathVariable Long id) {
         return bookHistoryService.getHistoryByBookId(id);
+    }
+    // ADMIN: Получить список всех бронирований в системе
+    @Operation(
+            summary = "Получить список всех бронирований (для админа)",
+            description = "Возвращает список всех записей о бронировании с возможностью фильтрации по статусу"
+    )
+    @GetMapping("/admin/reservations")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<ReservationResponse> getAllReservations(
+            @Parameter(description = "Фильтр по статусу (ACTIVE, COMPLETED, RETURNED, CANCELLED)")
+            @RequestParam(required = false) ReservationStatus status
+    ) {
+        return reservationService.getAllReservationsForAdmin(status);
     }
 
 }
