@@ -1,10 +1,12 @@
 package com.example.library.service;
 
+import com.example.library.entity.Book;
 import com.example.library.entity.Category;
 import com.example.library.repository.BookRepository;
 import com.example.library.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -47,17 +49,29 @@ public class CategoryService {
         return categoryRepository.save(category);
     }
 
+    @Transactional // ОБЯЗАТЕЛЬНО добавь это, так как у нас два действия с БД
     public void delete(Long id) {
-        if (!categoryRepository.existsById(id)) {
-            throw new RuntimeException("Category not found");
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+
+        // 1. Проверяем наличие АКТИВНЫХ книг (не удаленных мягко)
+        // Допустим, мы разрешаем удалять категорию, если в ней нет ЖИВЫХ книг
+        boolean hasActiveBooks = bookRepository.existsByCategoryIdAndDeletedFalse(id);
+
+        if (hasActiveBooks) {
+            throw new RuntimeException("Нельзя удалить категорию: в ней всё еще есть активные книги!");
         }
 
-        // ГЛАВНАЯ ФИШКА: Проверяем, есть ли книги в этой категории
-        if (bookRepository.existsByCategoryId(id)) {
-            throw new RuntimeException("Cannot delete category: it is associated with books");
+        // 2. РЕШАЕМ ПРОБЛЕМУ FOREIGN KEY:
+        // Находим все архивные (soft-deleted) книги этой категории и убираем у них привязку
+        List<Book> archivedBooks = bookRepository.findAllByCategoryId(id);
+        for (Book book : archivedBooks) {
+            book.setCategory(null); // или перекинь в категорию "Без категории"
         }
+        bookRepository.saveAll(archivedBooks);
 
-        categoryRepository.deleteById(id);
+        // 3. Теперь база позволит удалить категорию
+        categoryRepository.delete(category);
     }
 }
 

@@ -21,4 +21,9 @@ public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificat
     Optional<Book> findByIdIncludingDeleted(@Param("id") Long id);
 
     boolean existsByCategoryId(Long categoryId);
+
+    boolean existsByCategoryIdAndDeletedFalse(Long categoryId);
+
+    // Поиск всех книг категории (включая удаленные)
+    List<Book> findAllByCategoryId(Long categoryId);
 }
