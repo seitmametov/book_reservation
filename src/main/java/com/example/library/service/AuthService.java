@@ -18,6 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -32,31 +34,34 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new RuntimeException("Электронная почта уже существует    ");
+            throw new RuntimeException("Электронная почта уже существует");
         }
 
         User user = User.builder()
-                .firstName(request.firstName()).lastName(request.lastName())
+                .firstName(request.firstName())
+                .lastName(request.lastName())
                 .email(request.email())
                 .password(encoder.encode(request.password()))
                 .role(Role.USER)
-                .enabled(false)       // Админ пока не видит
-                .emailVerified(false)  // Почта не подтверждена
+                .enabled(false)
+                .emailVerified(false)
                 .build();
 
         userRepository.save(user);
 
+        // ЧИСТКА: Удаляем старые токены перед созданием нового
+        tokenRepository.deleteByUserId(user.getId());
+
         ConfirmationToken token = new ConfirmationToken(user, 15);
         tokenRepository.save(token);
+
         String link = "http://localhost:8080/auth/confirm?token=" + token.getToken();
         emailService.send(user.getEmail(), "Click here to confirm: " + link);
 
         return new AuthResponse("Пожалуйста, подтвердите свой адрес электронной почты. Проверьте свою почту..");
     }
 
-
     public AuthResponse login(LoginRequest request) {
-
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.email(),
@@ -64,10 +69,8 @@ public class AuthService {
                 )
         );
 
-        UserDetailsImpl userDetails =
-                (UserDetailsImpl) auth.getPrincipal();
-
-        User user = userDetails.getUser(); // ✅ ВОТ ТАК
+        UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+        User user = userDetails.getUser();
 
         if (!user.isEmailVerified()) {
             throw new RuntimeException("Пожалуйста, сначала подтвердите свой адрес электронной почты.");
@@ -80,15 +83,13 @@ public class AuthService {
         return new AuthResponse(token);
     }
 
-
     public String registerAdmin(RegisterRequest request) {
-
         if (userRepository.existsByEmail(request.email())) {
             throw new RuntimeException("Админ уже существует");
         }
 
         User admin = User.builder()
-                .firstName(request.firstName()) // Добавили
+                .firstName(request.firstName())
                 .lastName(request.lastName())
                 .email(request.email())
                 .password(encoder.encode(request.password()))
@@ -97,38 +98,39 @@ public class AuthService {
                 .build();
 
         userRepository.save(admin);
-
         return "Админ успешно зарегистрировался";
     }
+
     @Transactional
     public String confirmToken(String token) {
-        // В методах подтверждения добавь проверку:
         ConfirmationToken confirmationToken = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Токен не найден"));
 
         if (confirmationToken.isExpired()) {
-            tokenRepository.delete(confirmationToken); // Удаляем мусор
+            tokenRepository.delete(confirmationToken);
             throw new RuntimeException("Срок действия токена истек! Пожалуйста, запросите новый токен");
         }
+
         User user = confirmationToken.getUser();
         user.setEmailVerified(true);
         userRepository.save(user);
 
-        // Теперь токен можно удалить
         tokenRepository.delete(confirmationToken);
 
         return "Адрес электронной почты подтвержден! Теперь дождитесь подтверждения администратора! ";
     }
+
     @Transactional
     public String forgotPassword(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        // Генерим токен (используем наш старый добрый ConfirmationToken)
+        // ЧИСТКА: Если юзер спамит кнопкой "Забыл пароль", удаляем старый токен перед новым INSERT
+        tokenRepository.deleteByUserId(user.getId());
+
         ConfirmationToken token = new ConfirmationToken(user, 15);
         tokenRepository.save(token);
 
-        // Ссылка будет вести на фронтенд или на наш эндпоинт
         String link = "http://localhost:8080/auth/reset-password?token=" + token.getToken();
         emailService.send(user.getEmail(), "To reset your password, click: " + link);
 
@@ -141,17 +143,13 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("Недействительный или просроченный токен"));
 
         User user = confirmationToken.getUser();
-
-        // Хэшируем новый пароль
         user.setPassword(encoder.encode(request.newPassword()));
         userRepository.save(user);
 
-        // Удаляем токен, чтобы его нельзя было юзать второй раз
         tokenRepository.delete(confirmationToken);
 
         return "Пароль успешно обновлен!";
     }
-    // Добавь это в AuthService.java
 
     @Transactional
     public String initiateEmailChange(User user, String newEmail) {
@@ -159,14 +157,13 @@ public class AuthService {
             throw new RuntimeException("Этот email уже занят другим пользователем");
         }
 
-        // Генерируем токен.
-        // Чтобы знать, какой email подтверждаем, можно временно сохранить его где-то,
-        // но проще всего передать его в саму ссылку (параметром)
-        ConfirmationToken token = new ConfirmationToken(user, 30); // Даем 30 минут
+        // ЧИСТКА: Удаляем старый токен смены почты, если он был
+        tokenRepository.deleteByUserId(user.getId());
+
+        ConfirmationToken token = new ConfirmationToken(user, 30);
         tokenRepository.save(token);
 
         String link = "http://localhost:8080/auth/confirm-email-change?token=" + token.getToken() + "&newEmail=" + newEmail;
-
         emailService.send(newEmail, "Подтвердите смену email. Кликните по ссылке: " + link);
 
         return "Ссылка для подтверждения отправлена на вашу новую почту.";
@@ -184,7 +181,6 @@ public class AuthService {
 
         User user = confirmationToken.getUser();
 
-        // Проверяем еще раз на уникальность перед финальным сохранением
         if (userRepository.existsByEmail(newEmail)) {
             throw new RuntimeException("Этот email уже успели занять!");
         }
@@ -197,5 +193,3 @@ public class AuthService {
         return "Email успешно обновлен на " + newEmail;
     }
 }
-
-
