@@ -49,28 +49,29 @@ public class CategoryService {
         return categoryRepository.save(category);
     }
 
-    @Transactional // ОБЯЗАТЕЛЬНО добавь это, так как у нас два действия с БД
+    @Transactional
     public void delete(Long id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() -> new RuntimeException("Категория не найдена"));
 
-        // 1. Проверяем наличие АКТИВНЫХ книг (не удаленных мягко)
-        // Допустим, мы разрешаем удалять категорию, если в ней нет ЖИВЫХ книг
-        boolean hasActiveBooks = bookRepository.existsByCategoryIdAndDeletedFalse(id);
+        // 1. Сначала проверяем, нет ли книг вообще (даже скрытых)
+        // Если ты хочешь разрешить удаление, если книги "скрыты" - пропусти этот шаг.
+        // Но лучше сначала очистить связи:
 
-        if (hasActiveBooks) {
-            throw new RuntimeException("Нельзя удалить категорию: в ней всё еще есть активные книги!");
+        List<Book> allBooks = bookRepository.findAllByCategoryIdIncludingHidden(id);
+
+        if (!allBooks.isEmpty()) {
+            // Лог для дебага:
+            System.out.println("Найдено книг в категории: " + allBooks.size());
+
+            for (Book book : allBooks) {
+                book.setCategory(null);
+            }
+            bookRepository.saveAll(allBooks);
+            bookRepository.flush(); // Принудительно отправляем в базу ПРЯМО СЕЙЧАС
         }
 
-        // 2. РЕШАЕМ ПРОБЛЕМУ FOREIGN KEY:
-        // Находим все архивные (soft-deleted) книги этой категории и убираем у них привязку
-        List<Book> archivedBooks = bookRepository.findAllByCategoryId(id);
-        for (Book book : archivedBooks) {
-            book.setCategory(null); // или перекинь в категорию "Без категории"
-        }
-        bookRepository.saveAll(archivedBooks);
-
-        // 3. Теперь база позволит удалить категорию
+        // 2. Теперь удаляем категорию
         categoryRepository.delete(category);
     }
 }

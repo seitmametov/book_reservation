@@ -22,8 +22,13 @@ public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificat
 
     boolean existsByCategoryId(Long categoryId);
 
-    boolean existsByCategoryIdAndDeletedFalse(Long categoryId);
+    @Query(value = "SELECT count(*) > 0 FROM books WHERE category_id = :categoryId", nativeQuery = true)
+    boolean existsAnyByCategoryId(@Param("categoryId") Long categoryId);
 
     // Поиск всех книг категории (включая удаленные)
     List<Book> findAllByCategoryId(Long categoryId);
+
+    // Достаем АБСОЛЮТНО все книги этой категории, игнорируя фильтры Hibernate
+    @Query(value = "SELECT * FROM books WHERE category_id = :categoryId", nativeQuery = true)
+    List<Book> findAllByCategoryIdIncludingHidden(@Param("categoryId") Long categoryId);
 }
