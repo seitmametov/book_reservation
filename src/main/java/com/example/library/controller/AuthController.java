@@ -1,10 +1,7 @@
 package com.example.library.controller;
 
-import com.example.library.Dto.request.ForgotPasswordRequest;
-import com.example.library.Dto.request.ResetPasswordRequest;
+import com.example.library.Dto.request.*;
 import com.example.library.Dto.response.AuthResponse;
-import com.example.library.Dto.request.LoginRequest;
-import com.example.library.Dto.request.RegisterRequest;
 import com.example.library.entity.User;
 import com.example.library.repository.UserRepository;
 import com.example.library.service.AuthService;
@@ -87,5 +84,19 @@ public class AuthController {
             @RequestParam("token") String token,
             @RequestParam("newEmail") String newEmail) {
         return ResponseEntity.ok(authService.confirmEmailChange(token, newEmail));
+    }
+    @Operation(
+            summary = "Удаление пользователя (Admin Only)",
+            description = "Админ удаляет пользователя, подтверждая действие своим паролем."
+    )
+    @DeleteMapping("/admin/users/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> deleteUser(
+            @PathVariable Long id,
+            @RequestBody UserDeleteRequest request,
+            java.security.Principal principal
+    ) {
+        authService.deleteUserByAdmin(id, request.adminPassword(), principal.getName());
+        return ResponseEntity.ok("Пользователь успешно удален.");
     }
 }

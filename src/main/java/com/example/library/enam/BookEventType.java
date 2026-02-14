@@ -1,6 +1,7 @@
 package com.example.library.enam;
 
-public enum BookEventType {
+public enum
+    BookEventType {
     RESERVED, //бронь
     CANCELLED, //Отмена
     TAKEN, //Взял

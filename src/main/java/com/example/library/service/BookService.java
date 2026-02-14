@@ -2,15 +2,18 @@ package com.example.library.service;
 
 import com.example.library.Dto.request.BookCreateRequest;
 import com.example.library.Dto.request.BookFilterRequest;
+import com.example.library.Dto.request.BookRequest;
 import com.example.library.Dto.response.BookResponse;
 import com.example.library.Specification.BookSpecification;
 import com.example.library.enam.BookStatus;
 import com.example.library.enam.SortDirection;
 import com.example.library.entity.Book;
+import com.example.library.entity.Category;
 import com.example.library.entity.Reservation;
 import com.example.library.entity.User;
 import com.example.library.mapper.BookMapper;
 import com.example.library.repository.BookRepository;
+import com.example.library.repository.CategoryRepository;
 import com.example.library.repository.ReservationRepository;
 import com.example.library.security.SecurityUtils;
 
@@ -18,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -30,6 +34,7 @@ public class BookService {
     private final BookMapper bookMapper;
     private final FileStorageService fileStorageService;
     private final ReservationRepository reservationRepository; // ДОБАВЛЕНО
+    private final CategoryRepository categoryRepository;
 
 
 
@@ -145,6 +150,28 @@ public class BookService {
             case RATING -> Sort.by(direction, "rating");
             case POPULARITY -> Sort.by(direction, "popularity");
         };
+    }
+    @Transactional
+    public BookResponse update(Long id, BookRequest request) {
+        // 1. Ищем книгу
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Книга не найдена"));
+
+        // 2. Обновляем простые поля
+        book.setTitle(request.title());
+        book.setAuthor(request.author());
+        book.setDescription(request.description());
+        book.setLocation(request.location());
+
+        // 3. Обновляем категорию (если ID пришел)
+        if (request.categoryId() != null) {
+            Category category = categoryRepository.findById(request.categoryId())
+                    .orElseThrow(() -> new RuntimeException("Категория не найдена"));
+            book.setCategory(category);
+        }
+
+        // 4. Сохраняем и маппим в ответ
+        return bookMapper.toResponse(bookRepository.save(book));
     }
 
 

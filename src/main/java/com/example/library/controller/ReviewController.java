@@ -37,4 +37,31 @@ public class ReviewController {
     public List<ReviewResponse> getReviews(@PathVariable Long id) {
         return reviewService.getBookReviews(id);
     }
+
+    @Operation(summary = "Редактировать свой отзыв")
+    @PutMapping("/{reviewId}")
+    public ReviewResponse updateReview(
+            @PathVariable Long reviewId,
+            @RequestBody @Valid ReviewRequest request,
+            Principal principal
+    ) {
+        // Редактировать может только владелец (проверка внутри сервиса)
+        return reviewService.updateReview(reviewId, request, principal.getName());
+    }
+
+    @Operation(summary = "Удалить отзыв (автор или админ)")
+    @DeleteMapping("/{reviewId}")
+    public void deleteReview(
+            @PathVariable Long reviewId,
+            Principal principal
+    ) {
+        // Проверяем роль через SecurityContext
+        boolean isAdmin = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getAuthorities()
+                .stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        reviewService.deleteReview(reviewId, principal.getName(), isAdmin);
+    }
 }

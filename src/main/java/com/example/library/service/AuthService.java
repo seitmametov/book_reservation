@@ -192,4 +192,28 @@ public class AuthService {
 
         return "Email успешно обновлен на " + newEmail;
     }
+    @Transactional
+    public void deleteUserByAdmin(Long userId, String adminPassword, String adminEmail) {
+        // 1. Ищем самого админа, который делает запрос
+        User admin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new RuntimeException("Администратор не найден"));
+
+        // 2. Проверяем пароль админа
+        if (!encoder.matches(adminPassword, admin.getPassword())) {
+            throw new RuntimeException("Неверный пароль администратора. Подтверждение отклонено.");
+        }
+
+        // 3. Ищем пользователя, которого хотим удалить
+        User userToDelete = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Пользователь для удаления не найден"));
+
+        // 4. Удаляем (или помечаем как удаленного)
+        // Если у тебя настроено мягкое удаление (is_deleted = true), используй:
+        userToDelete.setDeleted(true);
+        userToDelete.setEnabled(false); // Сразу блокируем вход
+        userRepository.save(userToDelete);
+
+        // Если нужно жесткое удаление из БД:
+        // userRepository.delete(userToDelete);
+    }
 }

@@ -1,6 +1,7 @@
 package com.example.library.controller;
 
 import com.example.library.Dto.request.BookCreateRequest;
+import com.example.library.Dto.request.BookRequest;
 import com.example.library.Dto.response.BookHistoryResponse;
 import com.example.library.Dto.response.BookResponse;
 import com.example.library.Dto.response.ReservationResponse;
@@ -253,6 +254,12 @@ public class BookController {
             @RequestParam(required = false) ReservationStatus status
     ) {
         return reservationService.getAllReservationsForAdmin(status);
+    }
+    @Operation(summary = "Редактировать книгу", description = "Обновление данных книги. Нужен ADMIN")
+    @PutMapping("/admin/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public BookResponse update(@PathVariable Long id, @RequestBody BookRequest request) {
+        return bookService.update(id, request);
     }
 
 }

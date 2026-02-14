@@ -77,4 +77,49 @@ public class ReviewService {
     public Double getAverageRating(Long bookId) {
         return reviewRepository.getAverageRatingByBookId(bookId);
     }
+
+    @Transactional
+    public ReviewResponse updateReview(Long reviewId, ReviewRequest request, String email) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Отзыв не найден"));
+
+        // ПРОВЕРКА: Только автор может редактировать
+        if (!review.getUser().getEmail().equals(email)) {
+            throw new RuntimeException("Вы можете редактировать только свой отзыв!");
+        }
+
+        review.setRating(request.rating());
+        review.setComment(request.comment());
+        reviewRepository.save(review);
+
+        // Обновляем рейтинг книги
+        updateBookRating(review.getBook());
+
+        return new ReviewResponse(
+                review.getId(),
+                review.getUser().getEmail(),
+                review.getRating(),
+                review.getComment(),
+                review.getCreatedAt()
+        );
+    }
+    @Transactional
+    public void deleteReview(Long reviewId, String email, boolean isAdmin) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Отзыв не найден"));
+
+        // ПРОВЕРКА: Удалить может либо автор, либо админ
+        boolean isOwner = review.getUser().getEmail().equals(email);
+
+        if (!isOwner && !isAdmin) {
+            throw new RuntimeException("У вас нет прав на удаление этого отзыва!");
+        }
+
+        Book book = review.getBook();
+        reviewRepository.delete(review);
+
+        // Пересчитываем рейтинг книги после удаления
+        updateBookRating(book);
+    }
+    
 }
