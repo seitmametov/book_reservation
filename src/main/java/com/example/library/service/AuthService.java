@@ -94,11 +94,12 @@ public class AuthService {
                 .email(request.email())
                 .password(encoder.encode(request.password()))
                 .role(Role.ADMIN)
-                .enabled(true)
+                .enabled(true)         // Учетка активна
+                .emailVerified(true)   // ПОЧТА СРАЗУ ПОДТВЕРЖДЕНА (Добавь эту строку)
                 .build();
 
         userRepository.save(admin);
-        return "Админ успешно зарегистрировался";
+        return "Админ успешно зарегистрирован и подтвержден";
     }
 
     @Transactional

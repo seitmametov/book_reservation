@@ -41,7 +41,7 @@ minio:
   endpoint: http://localhost:9000
   access-key: minio
   secret-key: minio123
-  bucket: book-covers # Это будет дефолтный бакет для книг
+  bucket-name: book-covers # Это будет дефолтный бакет для книг
 
 library:
   reservation:
