@@ -3,16 +3,16 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
-    username: postgres
-    password: root
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:postgres}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:root}
     driver-class-name: org.postgresql.Driver
 
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: 0anade0@gmail.com
-    password: xzzehazmsvflghpr # ПРЯЧЬ ЭТО ПРИ ПУШЕ В ГИТ!
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
@@ -38,10 +38,10 @@ spring:
     expose-request-attributes: true
 
 minio:
-  endpoint: http://localhost:9000
-  access-key: minio
-  secret-key: minio123
-  bucket-name: book-covers # Это будет дефолтный бакет для книг
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minio}
+  secret-key: ${MINIO_SECRET_KEY:minio123}
+  bucket: ${MINIO_BUCKET:book-covers}
 
 library:
   reservation:
