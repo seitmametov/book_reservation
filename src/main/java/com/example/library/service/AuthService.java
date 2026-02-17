@@ -56,7 +56,7 @@ public class AuthService {
         tokenRepository.save(token);
 
         String link = "http://localhost:8080/auth/confirm?token=" + token.getToken();
-        emailService.send(user.getEmail(), "Click here to confirm: " + link);
+        emailService.send(user.getEmail(), "Нажмите здесь, чтобы подтвердить: " + link);
 
         return new AuthResponse("Пожалуйста, подтвердите свой адрес электронной почты. Проверьте свою почту..");
     }
@@ -133,7 +133,7 @@ public class AuthService {
         tokenRepository.save(token);
 
         String link = "http://localhost:8080/auth/reset-password?token=" + token.getToken();
-        emailService.send(user.getEmail(), "To reset your password, click: " + link);
+        emailService.send(user.getEmail(), "Чтобы сбросить пароль, нажмите здесь.: " + link);
 
         return "Ссылка для сброса пароля будет отправлена на вашу электронную почту.";
     }
