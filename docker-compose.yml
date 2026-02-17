@@ -28,13 +28,25 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD}
     depends_on:
       - db
+  minio:
+    image: minio/minio  # Скачается официально
+    command: server /data
 
-  frontend:
-    build:
-      context: .
-      dockerfile: Frontend/frontend.Dockerfile
-    container_name: library-frontend
+
+  frontend-user:
+    image: seitmametov/library-front-user:latest
+    container_name: library-frontend-user
+    restart: always
     ports:
-      - "3000:80"
+      - "80:80" # Будет доступен просто по IP сервера
+    depends_on:
+      - backend
+
+  frontend-admin:
+    image: seitmametov/library-front-admin:latest
+    container_name: library-frontend-admin
+    restart: always
+    ports:
+      - "81:80" # Будет доступен по адресу IP:81
     depends_on:
       - backend
