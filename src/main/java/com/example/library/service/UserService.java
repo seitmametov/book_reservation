@@ -50,7 +50,15 @@ public class UserService {
     // Метод для сохранения ссылки на аватарку (вызовем позже)
     @Transactional
     public void updateAvatar(User user, String avatarUrl) {
-        user.setAvatarUrl(avatarUrl); // Добавь это поле в сущность User!
+        if (avatarUrl == null) {
+            user.setAvatarUrl(null);
+        } else {
+            // Гарантированно берем только имя файла, даже если пришла вся ссылка
+            String fileName = avatarUrl.contains("/")
+                    ? avatarUrl.substring(avatarUrl.lastIndexOf("/") + 1)
+                    : avatarUrl;
+            user.setAvatarUrl(fileName);
+        }
         userRepository.save(user);
     }
     public UserResponse mapToResponse(User user) {

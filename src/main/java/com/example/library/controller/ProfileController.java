@@ -3,6 +3,7 @@ package com.example.library.controller;
 import com.example.library.Dto.request.UpdateProfileRequest;
 import com.example.library.Dto.response.UserResponse;
 import com.example.library.entity.User;
+import com.example.library.repository.UserRepository;
 import com.example.library.service.AuthService;
 import com.example.library.service.FileStorageService;
 import com.example.library.service.UserService;
@@ -27,12 +28,17 @@ public class ProfileController {
     private final UserService userService;
     private final FileStorageService fileStorageService;
     private final AuthService authService;
+    private final UserRepository userRepository;
     // Сюда потом заинжектим MinioService
 
     @Operation(summary = "Получить данные моего профиля")
     @GetMapping("/me")
     public UserResponse getMe(@AuthenticationPrincipal UserDetailsImpl userDetails) {
-        User user = userDetails.getUser();
+        // Вместо использования userDetails.getUser(), идем в базу по ID
+        // Предполагаем, что у тебя в userService есть метод findById или подобный
+        User user = userRepository.findById(userDetails.getUser().getId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         return new UserResponse(
                 user.getId(),
                 user.getEmail(),
@@ -40,10 +46,9 @@ public class ProfileController {
                 user.getLastName(),
                 user.getRole().name(),
                 user.isEnabled(),
-                user.getAvatarUrl() // <-- ДОБАВЬ ЭТУ СТРОЧКУ!
+                user.getAvatarUrl() // Теперь здесь будет чистое имя файла из базы
         );
     }
-
     @Operation(summary = "Обновить Имя и Фамилию")
     @PutMapping("/update")
     public UserResponse update(@AuthenticationPrincipal UserDetailsImpl userDetails,
@@ -57,13 +62,16 @@ public class ProfileController {
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestPart("file") MultipartFile file
     ) {
-        // Загружаем в специальный бакет "avatars"
-        String avatarUrl = fileStorageService.upload(file, "avatars");
+        String fullAvatarUrl = fileStorageService.upload(file, "avatars");
 
-        // Сохраняем ссылку в БД для текущего юзера
-        userService.updateAvatar(userDetails.getUser(), avatarUrl);
+        // 2. Достаем ТОЛЬКО имя файла (всё, что после последнего слэша)
+        // Например, из "http://.../name.png" получится "name.png"
+        String fileNameOnly = fullAvatarUrl.substring(fullAvatarUrl.lastIndexOf("/") + 1);
 
-        return avatarUrl;
+        // 3. Сохраняем в БД только чистое имя!
+        userService.updateAvatar(userDetails.getUser(), fileNameOnly);
+
+        return fullAvatarUrl;
     }
     @Operation(summary = "Запросить смену Email", description = "Отправляет ссылку подтверждения на новый адрес")
     @PostMapping("/update-email")

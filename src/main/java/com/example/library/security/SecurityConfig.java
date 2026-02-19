@@ -36,10 +36,10 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs",
-                                "/auth/**",
+                                "/api/auth/**",  // <--- ДОБАВИЛ /api
+                                "/auth/**",      // Оставь на всякий случай
                                 "/error").permitAll()
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN") // Тоже добавь /api
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

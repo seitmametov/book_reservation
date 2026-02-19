@@ -26,7 +26,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     show-sql: true
     properties:
       hibernate:
@@ -42,6 +42,8 @@ minio:
   access-key: ${MINIO_ACCESS_KEY:minio}
   secret-key: ${MINIO_SECRET_KEY:minio123}
   bucket: ${MINIO_BUCKET:book-covers}
+  # Добавляем это поле!
+  external-url: ${MINIO_EXTERNAL_URL:http://localhost/book-covers}
 
 library:
   reservation:

@@ -41,7 +41,7 @@ public class BookService {
     public List<BookResponse> getAllBooks() {
         User currentUser = SecurityUtils.getCurrentUser();
 
-        return bookRepository.findAll().stream()
+        return bookRepository.findAllActive().stream()
                 .map(book -> {
                     BookResponse response = bookMapper.toResponse(book);
 
@@ -90,16 +90,19 @@ public class BookService {
         bookRepository.deleteById(id);
     }
     public void softDelete(Long id) {
-        Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Book not found"));
-        book.setDeleted(true);
-        bookRepository.save(book);
+        if (!bookRepository.existsById(id)) {
+            throw new RuntimeException("Book not found");
+        }
+        // Используем наш принудительный Update
+        bookRepository.setBookInactive(id);
     }
     // Дополнительный метод для восстановления книги
     public void restore(Long id) {
+        // Ищем даже среди удаленных (active = false)
         Book book = bookRepository.findByIdIncludingDeleted(id)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
-        book.setDeleted(false);
+
+        book.setActive(true); // МЕНЯЕМ НА TRUE
         bookRepository.save(book);
     }
 
