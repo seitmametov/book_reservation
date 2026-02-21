@@ -4,10 +4,14 @@ import com.example.library.Dto.request.ResetPasswordRequest;
 import com.example.library.Dto.response.AuthResponse;
 import com.example.library.Dto.request.LoginRequest;
 import com.example.library.Dto.request.RegisterRequest;
+import com.example.library.enam.BookStatus;
+import com.example.library.enam.ReservationStatus;
 import com.example.library.enam.Role;
 import com.example.library.entity.ConfirmationToken;
+import com.example.library.entity.Reservation;
 import com.example.library.entity.User;
 import com.example.library.repository.ConfirmationTokenRepository;
+import com.example.library.repository.ReservationRepository;
 import com.example.library.repository.UserRepository;
 import com.example.library.service.impl.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +35,10 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final ConfirmationTokenRepository tokenRepository;
     private final EmailService emailService;
+    private final ReservationRepository reservationRepository;
+
+    @org.springframework.beans.factory.annotation.Value("${app.url}")
+    private String appUrl;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -55,7 +64,7 @@ public class AuthService {
         ConfirmationToken token = new ConfirmationToken(user, 15);
         tokenRepository.save(token);
 
-        String link = "http://localhost:8080/auth/confirm?token=" + token.getToken();
+        String link = appUrl + "/auth/confirm?token=" + token.getToken();
         emailService.send(user.getEmail(), "Нажмите здесь, чтобы подтвердить: " + link);
 
         return new AuthResponse("Пожалуйста, подтвердите свой адрес электронной почты. Проверьте свою почту..");
@@ -83,7 +92,7 @@ public class AuthService {
         return new AuthResponse(token);
     }
 
-    public String registerAdmin(RegisterRequest request) {
+    public AuthResponse registerAdmin(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new RuntimeException("Админ уже существует");
         }
@@ -94,12 +103,15 @@ public class AuthService {
                 .email(request.email())
                 .password(encoder.encode(request.password()))
                 .role(Role.ADMIN)
-                .enabled(true)         // Учетка активна
-                .emailVerified(true)   // ПОЧТА СРАЗУ ПОДТВЕРЖДЕНА (Добавь эту строку)
+                .enabled(true)
+                .emailVerified(true) // Почта сразу подтверждена
                 .build();
 
         userRepository.save(admin);
-        return "Админ успешно зарегистрирован и подтвержден";
+
+        // Сразу генерируем токен, чтобы фронтенд мог его сохранить
+        String token = jwtService.generateToken(admin);
+        return new AuthResponse(token);
     }
 
     @Transactional
@@ -132,7 +144,7 @@ public class AuthService {
         ConfirmationToken token = new ConfirmationToken(user, 15);
         tokenRepository.save(token);
 
-        String link = "http://localhost:8080/auth/reset-password?token=" + token.getToken();
+        String link = appUrl + "/auth/reset-password?token=" + token.getToken();
         emailService.send(user.getEmail(), "Чтобы сбросить пароль, нажмите здесь.: " + link);
 
         return "Ссылка для сброса пароля будет отправлена на вашу электронную почту.";
@@ -164,7 +176,7 @@ public class AuthService {
         ConfirmationToken token = new ConfirmationToken(user, 30);
         tokenRepository.save(token);
 
-        String link = "http://localhost:8080/auth/confirm-email-change?token=" + token.getToken() + "&newEmail=" + newEmail;
+        String link = appUrl + "/auth/confirm-email-change?token=" + token.getToken() + "&newEmail=" + newEmail;
         emailService.send(newEmail, "Подтвердите смену email. Кликните по ссылке: " + link);
 
         return "Ссылка для подтверждения отправлена на вашу новую почту.";
@@ -195,26 +207,36 @@ public class AuthService {
     }
     @Transactional
     public void deleteUserByAdmin(Long userId, String adminPassword, String adminEmail) {
-        // 1. Ищем самого админа, который делает запрос
+        // 1. Проверка админа
         User admin = userRepository.findByEmail(adminEmail)
                 .orElseThrow(() -> new RuntimeException("Администратор не найден"));
 
-        // 2. Проверяем пароль админа
         if (!encoder.matches(adminPassword, admin.getPassword())) {
-            throw new RuntimeException("Неверный пароль администратора. Подтверждение отклонено.");
+            throw new RuntimeException("Неверный пароль администратора.");
         }
 
-        // 3. Ищем пользователя, которого хотим удалить
+        // 2. Проверка долгов пользователя (ИСПРАВЛЕНО НА ByUser_Id)
+        boolean hasBooksAtHand = reservationRepository.existsByUser_IdAndStatus(userId, ReservationStatus.COMPLETED);
+        if (hasBooksAtHand) {
+            throw new RuntimeException("Нельзя удалить: пользователь еще не вернул книги в библиотеку!");
+        }
+
+        // 3. Обработка активных броней (ИСПРАВЛЕНО НА ByUser_Id)
+        List<Reservation> activeRes = reservationRepository.findByUser_IdAndStatus(userId, ReservationStatus.ACTIVE);
+        for (Reservation res : activeRes) {
+            res.setStatus(ReservationStatus.CANCELLED);
+            if (res.getBook() != null) {
+                res.getBook().setStatus(BookStatus.AVAILABLE);
+            }
+        }
+
+        // 4. Мягкое удаление
         User userToDelete = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь для удаления не найден"));
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        // 4. Удаляем (или помечаем как удаленного)
-        // Если у тебя настроено мягкое удаление (is_deleted = true), используй:
         userToDelete.setDeleted(true);
-        userToDelete.setEnabled(false); // Сразу блокируем вход
+        userToDelete.setEnabled(false);
         userRepository.save(userToDelete);
-
-        // Если нужно жесткое удаление из БД:
-        // userRepository.delete(userToDelete);
     }
+
 }

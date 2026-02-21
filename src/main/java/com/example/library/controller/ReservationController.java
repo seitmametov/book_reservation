@@ -74,6 +74,10 @@ public class ReservationController {
     ) {
         return reservationService.myActiveReservations(userDetails.getUser());
     }
+    @GetMapping("/my/history")
+    public List<ReservationResponse> getMyHistory(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return reservationService.getMyReadingHistory(userDetails.getUser());
+    }
 
     @Operation(summary = "Отменить бронирование")
     @DeleteMapping("/{id}")

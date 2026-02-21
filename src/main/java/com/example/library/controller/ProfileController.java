@@ -3,6 +3,7 @@ package com.example.library.controller;
 import com.example.library.Dto.request.UpdateProfileRequest;
 import com.example.library.Dto.response.UserResponse;
 import com.example.library.entity.User;
+import com.example.library.properties.MinioProperties;
 import com.example.library.repository.UserRepository;
 import com.example.library.service.AuthService;
 import com.example.library.service.FileStorageService;
@@ -29,15 +30,19 @@ public class ProfileController {
     private final FileStorageService fileStorageService;
     private final AuthService authService;
     private final UserRepository userRepository;
-    // Сюда потом заинжектим MinioService
+    private final MinioProperties minioProperties; // 1. Добавь это поле!
 
-    @Operation(summary = "Получить данные моего профиля")
     @GetMapping("/me")
     public UserResponse getMe(@AuthenticationPrincipal UserDetailsImpl userDetails) {
-        // Вместо использования userDetails.getUser(), идем в базу по ID
-        // Предполагаем, что у тебя в userService есть метод findById или подобный
         User user = userRepository.findById(userDetails.getUser().getId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 2. Собираем полную ссылку прямо здесь
+        String fullAvatarUrl = null;
+        if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
+            // Склеиваем: Базовый_URL + /бакет/ + имя_файла
+            fullAvatarUrl = minioProperties.getExternalUrl() + "/avatars/" + user.getAvatarUrl();
+        }
 
         return new UserResponse(
                 user.getId(),
@@ -46,7 +51,7 @@ public class ProfileController {
                 user.getLastName(),
                 user.getRole().name(),
                 user.isEnabled(),
-                user.getAvatarUrl() // Теперь здесь будет чистое имя файла из базы
+                fullAvatarUrl // 3. Отдаем готовую ссылку
         );
     }
     @Operation(summary = "Обновить Имя и Фамилию")

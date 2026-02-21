@@ -26,7 +26,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
@@ -38,13 +38,16 @@ spring:
     expose-request-attributes: true
 
 minio:
-  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  endpoint: http://salman-minio:9000
   access-key: ${MINIO_ACCESS_KEY:minio}
   secret-key: ${MINIO_SECRET_KEY:minio123}
   bucket: ${MINIO_BUCKET:book-covers}
   # Добавляем это поле!
-  external-url: ${MINIO_EXTERNAL_URL:http://localhost/book-covers}
+  external-url: http://85.239.42.236:9005/api
 
 library:
   reservation:
     max-active: 3
+
+app:
+  url: http://85.239.42.236:9005/api

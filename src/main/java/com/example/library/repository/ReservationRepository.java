@@ -50,6 +50,17 @@ public interface ReservationRepository
     @Query("SELECT r FROM Reservation r WHERE r.book = :book AND r.status IN ('ACTIVE', 'COMPLETED')")
     Optional<Reservation> findActiveByBook(@Param("book") Book book);
 
+    void deleteByBookId(Long bookId);
+
+    @Query(value = "SELECT id, book_id, reserved_at, status FROM reservation WHERE user_id = :userId", nativeQuery = true)
+    List<Object[]> findAllRawByUserId(@Param("userId") Long userId);
+
+    // Измени эти две строки в конце твоего репозитория:
+
+    List<Reservation> findByUser_IdAndStatus(Long userId, ReservationStatus status);
+
+    boolean existsByUser_IdAndStatus(Long userId, ReservationStatus status);
+
 }
 
 

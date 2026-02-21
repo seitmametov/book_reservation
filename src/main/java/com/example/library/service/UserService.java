@@ -15,6 +15,7 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final EmailService emailService;
 
     public List<UserResponse> getAllUsers(Boolean enabled) {
         return userRepository.findAll().stream()
@@ -71,5 +72,20 @@ public class UserService {
                 user.isEnabled(),
                 user.getAvatarUrl() // Передаем ссылку в DTO
         );
+    }
+    // В UserService.java
+
+    @Transactional
+    public void approveUser(Long userId) {
+        // 1. Находим юзера
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+        // 2. Активируем его
+        user.setEnabled(true);
+        userRepository.save(user);
+
+        // 3. ОТПРАВЛЯЕМ КРАСИВОЕ ПИСЬМО
+        emailService.sendApproveEmail(user.getEmail(), user.getFirstName());
     }
 }

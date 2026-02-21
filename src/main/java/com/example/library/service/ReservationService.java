@@ -213,12 +213,18 @@
         }
 
         public List<ReservationResponse> myReservations(User user) {
-            return reservationRepository.findByUser(user)
-                    .stream()
+            // Используем обычный репозиторий, теперь с @NotFound он не упадет
+            return reservationRepository.findByUser(user).stream()
+                    .filter(res -> {
+                        try {
+                            return res.getBook() != null && res.getBook().isActive();
+                        } catch (Exception e) {
+                            return false;
+                        }
+                    })
                     .map(this::toResponse)
                     .toList();
         }
-
         private ReservationResponse toResponse(Reservation reservation) {
             User user = reservation.getUser();
 
@@ -246,11 +252,19 @@
         }
 
         public List<ReservationResponse> getMyReadingHistory(User user) {
-            // Просто тянем всё, где статус RETURNED (прочитано)
             return reservationRepository.findByUserAndStatusIn(
                             user,
                             List.of(ReservationStatus.RETURNED)
                     ).stream()
+                    // ЭТА СТРОЧКА СПАСАЕТ ОТ ОШИБКИ:
+                    // Она пропустит бронирования, если книга была удалена из базы
+                    .filter(res -> {
+                        try {
+                            return res.getBook() != null && res.getBook().isActive();
+                        } catch (Exception e) {
+                            return false; // Если Hibernate кинет ошибку при доступе к книге, просто пропускаем эту бронь
+                        }
+                    })
                     .map(this::toResponse)
                     .toList();
         }

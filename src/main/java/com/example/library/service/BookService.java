@@ -177,6 +177,17 @@ public class BookService {
         return bookMapper.toResponse(bookRepository.save(book));
     }
 
+    @Transactional
+    public void deactivateBook(Long bookId) {
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new RuntimeException("Книга не найдена"));
+
+        book.setActive(false);
+        bookRepository.save(book);
+
+        reservationRepository.deleteByBookId(bookId);
+    }
+
 
 
 }

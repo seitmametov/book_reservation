@@ -5,6 +5,7 @@ import com.example.library.Dto.response.AuthResponse;
 import com.example.library.entity.User;
 import com.example.library.repository.UserRepository;
 import com.example.library.service.AuthService;
+import com.example.library.service.EmailService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     private final AuthService authService;
     private final UserRepository userRepository;
+    private final EmailService emailService;
 
     @Operation(summary = "Регистрация нового пользователя", description = "Создает аккаунт. После регистрации необходимо подтвердить email.")
     @PostMapping("/register")
@@ -33,6 +35,8 @@ public class AuthController {
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
     }
+
+    // В AuthController.java измени метод approve:
 
     @Operation(summary = "Одобрение регистрации (Admin Only)", description = "Активация аккаунта пользователя администратором. Только после подтверждения почты.")
     @PatchMapping("/admin/users/{id}/approve")
@@ -47,12 +51,19 @@ public class AuthController {
 
         user.setEnabled(true);
         userRepository.save(user);
-    }
 
-    @Operation(summary = "Регистрация администратора", description = "Создание пользователя с правами ADMIN.")
+        // --- ДОБАВЛЯЕМ ОТПРАВКУ ПИСЬМА ---
+        try {
+            // Вызываем наш красивый метод
+            emailService.sendApproveEmail(user.getEmail(), user.getFirstName());
+        } catch (Exception e) {
+            // Если почта не ушла, не ломаем весь процесс, просто выводим ошибку в консоль
+            System.err.println("Ошибка при отправке уведомления об одобрении: " + e.getMessage());
+        }
+    }
     @PostMapping("/register-admin")
-    public ResponseEntity<String> registerAdmin(@RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(authService.registerAdmin(request));
+    public AuthResponse registerAdmin(@RequestBody RegisterRequest request) {
+        return authService.registerAdmin(request);
     }
 
     @Operation(summary = "Подтверждение Email", description = "Активация токена, пришедшего на почту после регистрации.")
@@ -99,4 +110,5 @@ public class AuthController {
         authService.deleteUserByAdmin(id, request.adminPassword(), principal.getName());
         return ResponseEntity.ok("Пользователь успешно удален.");
     }
+
 }

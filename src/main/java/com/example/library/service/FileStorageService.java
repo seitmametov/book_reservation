@@ -56,7 +56,7 @@ public class FileStorageService {
                             .build()
             );
 
-            return properties.getExternalUrl() + "/" + filename;
+            return properties.getExternalUrl() + "/" + bucketName + "/" + filename;
 
         } catch (Exception e) {
             throw new RuntimeException("Minio upload failed", e);
