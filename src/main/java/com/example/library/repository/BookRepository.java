@@ -34,7 +34,7 @@ public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificat
     @Query(value = "SELECT * FROM books WHERE category_id = :categoryId", nativeQuery = true)
     List<Book> findAllByCategoryIdIncludingHidden(@Param("categoryId") Long categoryId);
 
-    @Query("SELECT b FROM Book b WHERE b.active = true")
+    @Query("SELECT b FROM Book b WHERE b.active = tr    ue")
     List<Book> findAllActive();
 
     @Modifying

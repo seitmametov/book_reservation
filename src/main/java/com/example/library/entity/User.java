@@ -15,8 +15,8 @@ import org.hibernate.annotations.SoftDeleteType;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@SQLDelete(sql = "UPDATE book SET is_deleted = true WHERE id = ?")
-@SQLRestriction("is_deleted = false") // Это замена старой @Where
+@SQLDelete(sql = "UPDATE users SET is_deleted = true WHERE id = ?")
+@SQLRestriction("is_deleted = false")
 public class User {
 
     @Id

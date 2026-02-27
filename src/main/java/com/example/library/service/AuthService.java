@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -42,32 +43,56 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
-            throw new RuntimeException("Электронная почта уже существует");
+        // 1. Ищем пользователя (включая удаленных/архивных)
+        Optional<User> existingUser = userRepository.findByEmailIncludingDeleted(request.email());
+
+        User user;
+        if (existingUser.isPresent()) {
+            user = existingUser.get();
+            if (user.isDeleted()) {
+                // ВОССТАНОВЛЕНИЕ: Оживляем старую запись
+                user.setFirstName(request.firstName());
+                user.setLastName(request.lastName());
+                user.setPassword(encoder.encode(request.password()));
+                user.setDeleted(false);
+                user.setEnabled(false);
+                user.setEmailVerified(false);
+                user = userRepository.save(user);
+            } else {
+                throw new RuntimeException("Электронная почта уже занята");
+            }
+        } else {
+            // СОЗДАНИЕ: Если юзера никогда не было
+            user = User.builder()
+                    .firstName(request.firstName())
+                    .lastName(request.lastName())
+                    .email(request.email())
+                    .password(encoder.encode(request.password()))
+                    .role(Role.USER)
+                    .enabled(false)
+                    .emailVerified(false)
+                    .deleted(false)
+                    .build();
+            user = userRepository.save(user);
         }
 
-        User user = User.builder()
-                .firstName(request.firstName())
-                .lastName(request.lastName())
-                .email(request.email())
-                .password(encoder.encode(request.password()))
-                .role(Role.USER)
-                .enabled(false)
-                .emailVerified(false)
-                .build();
-
-        userRepository.save(user);
-
-        // ЧИСТКА: Удаляем старые токены перед созданием нового
+        // 2. ЧИСТКА ТОКЕНОВ (Критически важно!)
+        // Удаляем старые токены этого юзера, если они остались
         tokenRepository.deleteByUserId(user.getId());
 
+        // Принудительно применяем удаление в БД прямо сейчас,
+        // чтобы не было ошибки Unique Constraint при вставке нового токена
+        tokenRepository.flush();
+
+        // 3. Создаем новый токен подтверждения
         ConfirmationToken token = new ConfirmationToken(user, 15);
         tokenRepository.save(token);
 
+        // 4. Отправка почты
         String link = appUrl + "/auth/confirm?token=" + token.getToken();
-        emailService.send(user.getEmail(), "Нажмите здесь, чтобы подтвердить: " + link);
+        emailService.send(user.getEmail(), "Подтвердите регистрацию: " + link);
 
-        return new AuthResponse("Пожалуйста, подтвердите свой адрес электронной почты. Проверьте свою почту..");
+        return new AuthResponse("Пожалуйста, подтвердите свой адрес электронной почты. Письмо отправлено.");
     }
 
     public AuthResponse login(LoginRequest request) {

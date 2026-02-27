@@ -20,7 +20,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     // Метод для получения списка отзывов
     List<Review> findByBookIdOrderByCreatedAtDesc(Long bookId);
 
-    // Метод для подсчета количества отзывов
     Long countByBookId(Long bookId);
 
     // Метод для вычисления среднего значения рейтинга
